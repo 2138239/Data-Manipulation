@@ -1,3 +1,5 @@
+/* Simple FUNCTION for lending bonus to the account holders  */
+
 create or replace FUNCTION TEST_AF(
  AMOUNT INTEGER ) RETURN BOOLEAN 
  IS 
