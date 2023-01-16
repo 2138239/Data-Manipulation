@@ -1,14 +1,22 @@
+/*Take the three parameters - CITY , AMOUNT and AGE of the Account in YEARS
+INSERT a record in TRANSACTIONS table for those accounts that match the above filters.
+UPDATE the record in ACCOUNTS table and increase the Opening Balance by AMOUNT for those accounts that match the above filters.
+Also Add Execeptions if AMOUNT should be > 0 and < 1000 . 0 < AMOUNT < 1000.
+CITY can be NULL , in which case CITY filter can be skipped.
+Print the Number of Rows , INSERTED / UPDATED when you can the function.
+*/
+
 create or replace PROCEDURE d_bonus (
     var_city     IN   customer.city%TYPE,
     var_amount   IN   account.opening_balance%TYPE,
     var_year     IN   NUMBER
 
 ) AS
-     
+     --exception variables
     invalid_year EXCEPTION;
     invalid_bonus EXCEPTION;
 BEGIN
-                                                 
+    /* Raising exceptions */                                            
     IF var_amount < 0 OR var_amount > 1000 then
         RAISE invalid_bonus;
     END IF;
@@ -19,7 +27,7 @@ BEGIN
        
         UPDATE account a
         SET
-            a.opening_balance = a.opening_balance + var_amount
+            a.opening_balance = a.opening_balance + var_amount              --GIVING BONUS ON OPENING_BALANCE
         WHERE
             a.astatus = 'Active'
             AND trunc(months_between(SYSDATE, a.aod)) > var_year * 12;
@@ -33,7 +41,7 @@ BEGIN
             WHERE
                 a.astatus = 'Active'
                 AND trunc(months_between(SYSDATE, a.aod)) > var_year * 12
-        ) LOOP INSERT INTO demo_transdetails VALUES (
+        ) LOOP INSERT INTO demo_transdetails VALUES (                                  /* LOOPING THE TNUMBER FOR CONTINUOUS SEQUENCE*/
             (
                 SELECT
                     'T'
@@ -105,6 +113,8 @@ BEGIN
     END IF;
 
     COMMIT;
+    
+ --EXCEPTION HANDLING
 EXCEPTION
     WHEN invalid_year THEN
         dbms_output.put_line('INVALID YEAR! The given year has negative value  ' || TO_CHAR(var_year));
