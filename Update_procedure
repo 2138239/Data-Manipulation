@@ -2,6 +2,7 @@
 	This is a procedure in mysql which updates Account table based on certain conditions.
 	It takes amount, year and city as the input parameters and updates the Account table.
 	Corresponding expected exceptions are also handled in the procedure.
+	Code will stop immediately after the exception is raised.
 */
 
 
