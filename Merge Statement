@@ -1,0 +1,77 @@
+/*Insert the records in the target table from stage table, also update the records periodically and set the active flag as 0 if the 
+record is no more present in the stage table*/
+
+--merging stage table and target table on the basis of updates happening and inserting new records
+MERGE INTO dim_products tar
+USING (SELECT
+    CASE                                                     /* case for taking the columns from stage
+                                                             table or target table in select statement*/
+        WHEN t.product_id IS NOT NULL                           
+             AND s.product_id IS NULL THEN
+            t.product_id
+        ELSE
+            s.product_id
+    END product_id,
+    CASE
+        WHEN t.product_name IS NOT NULL
+             AND s.product_name IS NULL THEN
+            t.product_name
+        ELSE
+            s.product_name
+    END product_name,
+    CASE
+        WHEN t.brand IS NOT NULL
+             AND s.brand IS NULL THEN
+            t.brand
+        ELSE
+            s.brand
+    END brand,
+    CASE
+        WHEN t.price IS NOT NULL
+             AND s.price IS NULL THEN
+            t.price
+        ELSE
+            s.price
+    END price,
+    start_date,
+    end_date,
+    CASE                                             --changing the active_key as per the deleted records from stage table
+        WHEN t.product_id IS NOT NULL
+             AND s.product_id IS NULL 
+             THEN
+            '0'
+        ELSE
+            '1'
+    END active_key
+FROM
+    dim_products   t
+    FULL OUTER JOIN products s ON ( t.product_id = s.product_id )
+    ) src
+ON ( tar.product_id = src.product_id )
+WHEN MATCHED THEN UPDATE                               --for any updated records
+SET  
+     product_name = src.product_name,
+     brand = src.brand,
+     price = src.price,
+   active_key = src.active_key
+WHEN NOT MATCHED THEN
+INSERT (                                               --for new records
+    product_id,
+    product_name,
+    brand,
+    price,
+    active_key,
+    start_date,
+    end_date )
+VALUES
+    (src.product_id,
+      src.product_name,
+      src.brand, src.price,
+    1,
+      SYSDATE,
+    add_months(sysdate, 76 * 12) );
+  /
+/* updating the previous records*/ 
+update products
+set price = price + 2000
+where product_id = 3;
