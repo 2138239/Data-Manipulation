@@ -1,0 +1,139 @@
+/*Create a Package using procedures and functions. */
+
+-- create package header
+/
+create or replace PACKAGE data_manipulation AS 
+   PROCEDURE festive_bonus(
+    var_city     IN   customer.city%TYPE,
+    var_amount   IN   account.opening_balance%TYPE,
+    var_year     IN   NUMBER); 
+END data_manipulation; 
+/
+
+--package body
+/
+CREATE PACKAGE BODY data_manipulation AS
+PROCEDURE festive_bonus (                                           /* local variables*/      
+    var_city     IN   customer.city%TYPE,
+    var_amount   IN   account.opening_balance%TYPE,      
+    var_year     IN   NUMBER
+
+) AS
+     --execptions
+    invalid_year EXCEPTION;
+    invalid_bonus EXCEPTION;
+BEGIN
+    --amount condition                                             
+    IF var_amount < 0 OR var_amount > 1000 then
+        RAISE invalid_bonus;
+    END IF;
+    --year should not be less than zero 
+    IF var_year < 0 THEN
+        RAISE invalid_year;
+    END IF;
+    IF var_city IS NULL OR var_city = '' THEN
+       
+        UPDATE account a
+        SET
+            a.opening_balance = a.opening_balance + var_amount                  /*adding the bonus in main account */
+        WHERE
+            a.astatus = 'Active'
+            AND trunc(months_between(SYSDATE, a.aod)) > var_year * 12;
+        
+                                                                            /* looping the tnumber to attain the sequence */     
+   FOR cur IN (
+            SELECT
+                a.acnumber
+            FROM
+                account a
+            WHERE
+                a.astatus = 'Active'
+                AND trunc(months_between(SYSDATE, a.aod)) > var_year * 12
+        ) 
+        /* inserting new records in the transdetails table that are added with the bonus*/
+        LOOP INSERT INTO demo_transdetails VALUES (
+            (
+                SELECT
+                    'T'
+                    || lpad(TO_CHAR(to_number(substr(MAX(tnumber), 2, 5)) + 1), 5, '0')
+                FROM
+                    demo_transdetails
+            ),
+            cur.acnumber,
+            SYSDATE,
+            'Wire Transfer',
+            'Deposit',
+            var_amount
+        );
+   
+
+        END LOOP;
+
+    ELSE
+        UPDATE account a
+        SET
+            a.opening_balance = a.opening_balance + var_amount
+        WHERE
+            a.astatus = 'Active'
+            AND trunc(months_between(SYSDATE, a.aod)) > var_year * 12
+            AND a.custid IN (
+                SELECT
+                    c.custid
+                FROM
+                    customer c
+                WHERE
+                    c.city = var_city
+            );
+           
+        FOR cur IN (
+            SELECT
+                a.acnumber
+            FROM
+                account a
+            WHERE
+                a.astatus = 'Active'
+                AND trunc(months_between(SYSDATE, a.aod)) > var_year * 12
+                AND a.custid IN (
+                    SELECT
+                        c.custid
+                    FROM
+                        customer c
+                    WHERE
+                        c.city = var_city
+                )
+        ) LOOP INSERT INTO demo_transdetails VALUES (
+            (
+                SELECT
+                    'T'
+                    || lpad(TO_CHAR(to_number(substr(MAX(tnumber), 2, 5)) + 1), 5, '0')
+                FROM
+                    demo_transdetails
+            ),
+            cur.acnumber,
+            SYSDATE,
+            'Wire Transfer',
+            'Deposit',
+            var_amount
+        );
+
+        END LOOP;
+
+    END IF;
+
+    COMMIT;
+ 
+ /* exeception statement */   
+EXCEPTION                                      
+    WHEN invalid_year THEN
+        dbms_output.put_line('INVALID YEAR! The given year has negative value  ' || TO_CHAR(var_year));
+    WHEN invalid_bonus THEN
+        dbms_output.put_line(' INVALID VALUE!! Sorry the amount is invalid  ' || TO_CHAR(var_amount));
+    WHEN OTHERS THEN
+        dbms_output.put_line('Error!');
+END;
+end data_manipulation;
+/
+--package calling procedure
+begin
+data_manipulation.festive_bonus('East Theodoreberg',6000,10);                          /* city, amount,year */
+end;
