@@ -1,3 +1,21 @@
+/*trigger on views for updating a previous record on a base table*/
+
+--created view by joining customer and account table
+
+CREATE OR REPLACE ACTIVE_STATUS ("CUSTID", "NAME", "ACNUMBER", "OPENING_BALANCE", "ASTATUS") AS 
+  SELECT
+        c.custid,
+        c.fname ||' '|| c.mname ||' '||c.ltname as Name,
+        a.acnumber,
+        a.opening_balance,
+        a.astatus
+    FROM
+        demo_customer   c,
+        demo_account    a
+        where c.custid=a.custid
+        order by c.custid;
+
+--instead of update trigger
 create or replace TRIGGER IO_UPDATE_TRigger
 INSTEAD OF INSERT ON view1
 FOR EACH ROW
@@ -6,3 +24,4 @@ BEGIN
   where astatus = :old.astatus;
 
 END;
+/
