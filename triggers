@@ -1,3 +1,13 @@
+/* Write a trigger,     
+      whenever there in insert in the table, then first two column should be populated
+      Ins_Time = current system date/time
+      Ins_User = User who is trying to insert
+      
+      whenever there in update in the table, then last two column should be populated
+      Upd_Time = current system date/time
+      upd_user = User who is trying to update
+*/
+
 create or replace TRIGGER tr before
     INSERT OR UPDATE ON demo
     FOR EACH ROW
@@ -6,18 +16,22 @@ DECLARE
     v_date TIMESTAMP;
 BEGIN
 
-    SELECT
+    SELECT                                                      -- populating the user and date from the dual table
         user, CURRENT_TIMESTAMP
     INTO v_user,v_date FROM dual;
-    IF inserting THEN
+    IF inserting THEN                                           -- condition for inserting the new records
       :new.ins_user := v_user;
       :new.ins_time := v_date;
 
 
-    ELSIF updating THEN
+    ELSIF updating THEN                                         -- condition for updating the old records 
         :new.upd_user := v_user;
         :new.upd_time := v_date;
 
     END IF;
 
 END;
+
+--executing statments
+insert into demo (name,city) values('James','Indore');
+insert into demo (name,city) values('Charles','London');
