@@ -1,0 +1,100 @@
+import pandas as pd
+from faker import Faker
+import random
+
+fake = Faker()
+
+# **********************************************************************************************************************
+# -------------------------------------------BRANCH TABLE---------------------------------------------------------------
+
+
+branch_columns = ['BID', 'BNAME', 'BCITY']
+branch = pd.DataFrame(columns= branch_columns)
+
+fake.unique.clear()
+for i in range(100):
+    branch.loc[i] = [fake.unique.bothify(text='B000##'), fake.street_name(), fake.city()]
+
+branch.sort_values(by=['BID']).reset_index(drop= True).to_csv('Branch_Dummy2.csv', index= False)
+
+
+# **********************************************************************************************************************
+# -------------------------------------------CUSTOMER TABLE-------------------------------------------------------------
+
+
+customer_columns = ['CUSTID', 'FNAME', 'MNAME', 'LNAME', 'CITY', 'MOBILENO', 'OCCUPATION', 'DOB']
+customer = pd.DataFrame(columns= customer_columns)
+
+fake.unique.clear()
+for i in range(1000):
+    customer.loc[i] = fake.unique.bothify(text='C00###'), fake.first_name(), fake.first_name(), fake.last_name(), fake.city(), fake.msisdn()[:10], fake.job(), fake.date()
+
+customer.sort_values(by= ['CUSTID']).reset_index(drop= True).to_csv('Customer_Dummy2.csv', index= False)
+
+
+# **********************************************************************************************************************
+# ---------------------------------------------LOAN TABLE---------------------------------------------------------------
+
+
+loan_columns = ['CUSTID', 'BID', 'LOAN_AMOUNT']
+loan = pd.DataFrame(columns= loan_columns)
+
+for i in range(400):
+    loan.loc[i] = [customer['CUSTID'][random.randrange(len(customer))], branch['BID'][random.randrange(len(branch))], int(fake.numerify(text = "#%###0"))]
+
+loan.to_csv('Loan_Dummy2.csv', index= False)
+
+
+#***********************************************************************************************************************
+# ---------------------------------------------ACCOUNT TABLE------------------------------------------------------------
+
+
+account_columns = ['ACNUMBER', 'CUSTID', 'BID', 'OPENING_BALANCE', 'AOD', 'ATYPE', 'ASTATUS']
+account = pd.DataFrame(columns= account_columns)
+
+opening_balance = [1000, 1000, 2000, 5000, 10000, 20000]
+account_type = ['Savings account', 'Salary account', 'Savings account', 'Salary account', 'Savings account', 'Fixed deposit account', 'Savings account', 'Salary account', 'Savings account', 'Fixed deposit account', 'NRI accounts', 'Savings account']
+status = ['Active', 'Active', 'Active', 'Terminated', 'Active', 'Active', 'Active', 'Suspended', 'Active']
+
+fake.unique.clear()
+for i in range(2500):
+    a = fake.unique.bothify(text='A0####')
+    b = customer['CUSTID'][random.randrange(len(customer))]
+    c = branch['BID'][random.randrange(len(branch))]
+    o = opening_balance[random.randrange(len(opening_balance))]
+    d = fake.date()
+    at = account_type[random.randrange(len(account_type))]
+    s = status[random.randrange(len(status))]
+
+    account.loc[i] = [a, b, c, o, d, at, s]
+
+account.sort_values(by= ['ACNUMBER']).reset_index(drop= True).to_csv('Account_Dummy2.csv', index= False)
+
+
+#***********************************************************************************************************************
+# -----------------------------------------Transaction TABLE------------------------------------------------------------
+
+
+transaction_columns = ['TNUMBER', 'ACNUMBER', 'DOT', 'MEDIUM_OF_TRANSACTION', 'TRANSACTION_TYPE', 'TRANSACTION_AMOUNT']
+transaction = pd.DataFrame(columns= transaction_columns)
+
+active_accounts = account[account['ASTATUS'] == 'Active'].reset_index(drop= True)
+
+
+medium_of_transaction = ['Cash', 'wire transfer', 'Cash', 'wire transfer', 'Cash', 'Cheque']
+transaction_type = ['Deposite', 'Withdrawal']
+
+fake.unique.clear()
+for i in range(5000):
+    T = fake.unique.bothify(text='T0####')
+    A = active_accounts['ACNUMBER'][random.randrange(len(active_accounts))]
+    d = fake.date()
+    MT = medium_of_transaction[random.randrange(len(medium_of_transaction))]
+    TT = transaction_type[random.randrange(len(transaction_type))]
+    amount = int(fake.numerify(text = "#%##0"))
+    transaction.loc[i] = [T, A, d, MT, TT, amount]
+
+transaction.sort_values(by= ['TNUMBER']).reset_index(drop= True).to_csv('Trandetails_Dummy2.csv', index= False)
+
+
+# **********************************************************************************************************************
